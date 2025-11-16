@@ -1,28 +1,35 @@
 from typing import Any
 
-from mcp_server.tools.users.base import BaseUserServiceTool
+from tools.users.base import BaseUserServiceTool
 
 
 class DeleteUserTool(BaseUserServiceTool):
-
     @property
     def name(self) -> str:
-        #TODO: Provide tool name as `delete_users`
-        raise NotImplementedError()
+        return "delete_users"
 
     @property
     def description(self) -> str:
-        #TODO: Provide description of this tool
-        raise NotImplementedError()
+        return "Deletes user by id."
 
     @property
     def input_schema(self) -> dict[str, Any]:
-        #TODO:
-        # Provide tool params Schema. This tool applies user `id` (number) as a parameter and it is required
-        raise NotImplementedError()
+        return {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "number",
+                    "description": "User ID that should be deleted.",
+                },
+            },
+            "required": ["id"],
+        }
 
     async def execute(self, arguments: dict[str, Any]) -> str:
-        #TODO:
-        # 1. Get int `id` from arguments
-        # 2. Call user_client delete_user and return its results (it is async, don't forget to await)
-        raise NotImplementedError()
+        try:
+            id = int(arguments["id"])
+            return await self._user_client.delete_user(id)
+        except Exception as e:
+            err_msg = f"Exception while deleting user: {e}"
+            print(err_msg)
+            return err_msg

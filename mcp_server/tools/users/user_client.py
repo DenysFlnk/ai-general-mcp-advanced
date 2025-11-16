@@ -2,13 +2,14 @@ import os
 from typing import Any, Optional
 
 import requests
+from models.user_info import UserCreate, UserUpdate
 
-from mcp_server.models.user_info import UserUpdate, UserCreate
+USER_SERVICE_ENDPOINT = os.getenv(
+    "USERS_MANAGEMENT_SERVICE_URL", "http://localhost:8041"
+)
 
-USER_SERVICE_ENDPOINT = os.getenv("USERS_MANAGEMENT_SERVICE_URL", "http://localhost:8041")
 
 class UserClient:
-
     def __user_to_string(self, user: dict[str, Any]):
         user_str = "```\n"
         for key, value in user.items():
@@ -28,7 +29,9 @@ class UserClient:
     async def get_user(self, user_id: int) -> str:
         headers = {"Content-Type": "application/json"}
 
-        response = requests.get(url=f"{USER_SERVICE_ENDPOINT}/v1/users/{user_id}", headers=headers)
+        response = requests.get(
+            url=f"{USER_SERVICE_ENDPOINT}/v1/users/{user_id}", headers=headers
+        )
 
         if response.status_code == 200:
             data = response.json()
@@ -37,11 +40,11 @@ class UserClient:
         raise Exception(f"HTTP {response.status_code}: {response.text}")
 
     async def search_users(
-            self,
-            name: Optional[str] = None,
-            surname: Optional[str] = None,
-            email: Optional[str] = None,
-            gender: Optional[str] = None,
+        self,
+        name: Optional[str] = None,
+        surname: Optional[str] = None,
+        email: Optional[str] = None,
+        gender: Optional[str] = None,
     ) -> str:
         headers = {"Content-Type": "application/json"}
 
@@ -55,7 +58,11 @@ class UserClient:
         if gender:
             params["gender"] = gender
 
-        response = requests.get(url=USER_SERVICE_ENDPOINT + "/v1/users/search", headers=headers, params=params)
+        response = requests.get(
+            url=USER_SERVICE_ENDPOINT + "/v1/users/search",
+            headers=headers,
+            params=params,
+        )
 
         if response.status_code == 200:
             data = response.json()
@@ -70,7 +77,7 @@ class UserClient:
         response = requests.post(
             url=f"{USER_SERVICE_ENDPOINT}/v1/users",
             headers=headers,
-            json=user_create_model.model_dump()
+            json=user_create_model.model_dump(),
         )
 
         if response.status_code == 201:
@@ -84,7 +91,7 @@ class UserClient:
         response = requests.put(
             url=f"{USER_SERVICE_ENDPOINT}/v1/users/{user_id}",
             headers=headers,
-            json=user_update_model.model_dump()
+            json=user_update_model.model_dump(),
         )
 
         if response.status_code == 201:
@@ -95,7 +102,9 @@ class UserClient:
     async def delete_user(self, user_id: int) -> str:
         headers = {"Content-Type": "application/json"}
 
-        response = requests.delete(url=f"{USER_SERVICE_ENDPOINT}/v1/users/{user_id}", headers=headers)
+        response = requests.delete(
+            url=f"{USER_SERVICE_ENDPOINT}/v1/users/{user_id}", headers=headers
+        )
 
         if response.status_code == 204:
             return "User successfully deleted"

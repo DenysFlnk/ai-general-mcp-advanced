@@ -1,28 +1,27 @@
 from typing import Any
 
-from mcp_server.models.user_info import UserCreate
-from mcp_server.tools.users.base import BaseUserServiceTool
+from models.user_info import UserCreate
+from tools.users.base import BaseUserServiceTool
 
 
 class CreateUserTool(BaseUserServiceTool):
-
     @property
     def name(self) -> str:
-        #TODO: Provide tool name as `add_user`
-        raise NotImplementedError()
+        return "add_user"
 
     @property
     def description(self) -> str:
-        #TODO: Provide description of this tool
-        raise NotImplementedError()
+        return "Creates user with provided info."
 
     @property
     def input_schema(self) -> dict[str, Any]:
-        #TODO: Provide tool params Schema. To do that you can create json schema from UserCreate pydentic model ` UserCreate.model_json_schema()`
-        raise NotImplementedError()
+        return UserCreate.model_json_schema()
 
     async def execute(self, arguments: dict[str, Any]) -> str:
-        #TODO:
-        # 1. Validate arguments with `UserCreate.model_validate`
-        # 2. Call user_client add user and return its results (it is async, don't forget to await)
-        raise NotImplementedError()
+        try:
+            request = UserCreate.model_validate(arguments)
+            return await self._user_client.add_user(request)
+        except Exception as e:
+            err_msg = f"Exception while adding new user: {e}"
+            print(err_msg)
+            return err_msg

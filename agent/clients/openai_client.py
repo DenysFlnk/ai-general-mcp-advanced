@@ -2,22 +2,21 @@ import json
 from collections import defaultdict
 from typing import Any
 
-from openai import AsyncAzureOpenAI, AsyncOpenAI
-
-from agent.clients.custom_mcp_client import CustomMCPClient
-from agent.models.message import Message, Role
-from agent.clients.mcp_client import MCPClient
+from clients.custom_mcp_client import CustomMCPClient
+from clients.mcp_client import MCPClient
+from models.message import Message, Role
+from openai import AsyncOpenAI
 
 
 class OpenAIClient:
     """Handles AI model interactions and integrates with MCP client"""
 
     def __init__(
-            self,
-            api_key: str,
-            model: str,
-            tools: list[dict[str, Any]],
-            tool_name_client_map: dict[str, MCPClient | CustomMCPClient]
+        self,
+        api_key: str,
+        model: str,
+        tools: list[dict[str, Any]],
+        tool_name_client_map: dict[str, MCPClient | CustomMCPClient],
     ):
         self.model = model
         self.tools = tools
@@ -26,14 +25,24 @@ class OpenAIClient:
 
     def _collect_tool_calls(self, tool_deltas):
         """Convert streaming tool call deltas to complete tool calls"""
-        tool_dict = defaultdict(lambda: {"id": None, "function": {"arguments": "", "name": None}, "type": None})
+        tool_dict = defaultdict(
+            lambda: {
+                "id": None,
+                "function": {"arguments": "", "name": None},
+                "type": None,
+            }
+        )
 
         for delta in tool_deltas:
             idx = delta.index
-            if delta.id: tool_dict[idx]["id"] = delta.id
-            if delta.function.name: tool_dict[idx]["function"]["name"] = delta.function.name
-            if delta.function.arguments: tool_dict[idx]["function"]["arguments"] += delta.function.arguments
-            if delta.type: tool_dict[idx]["type"] = delta.type
+            if delta.id:
+                tool_dict[idx]["id"] = delta.id
+            if delta.function.name:
+                tool_dict[idx]["function"]["name"] = delta.function.name
+            if delta.function.arguments:
+                tool_dict[idx]["function"]["arguments"] += delta.function.arguments
+            if delta.type:
+                tool_dict[idx]["type"] = delta.type
 
         return list(tool_dict.values())
 
@@ -45,7 +54,7 @@ class OpenAIClient:
                 "messages": [msg.to_dict() for msg in messages],
                 "tools": self.tools,
                 "temperature": 0.0,
-                "stream": True
+                "stream": True,
             }
         )
 
@@ -69,7 +78,7 @@ class OpenAIClient:
         return Message(
             role=Role.AI,
             content=content,
-            tool_calls=self._collect_tool_calls(tool_deltas) if tool_deltas else []
+            tool_calls=self._collect_tool_calls(tool_deltas) if tool_deltas else [],
         )
 
     async def get_completion(self, messages: list[Message]) -> Message:
@@ -94,7 +103,9 @@ class OpenAIClient:
             try:
                 client = self.tool_name_client_map.get(tool_name)
                 if not client:
-                    raise Exception(f"Unable to call {tool_name}. MCP client not found.")
+                    raise Exception(
+                        f"Unable to call {tool_name}. MCP client not found."
+                    )
 
                 tool_result = await client.call_tool(tool_name, tool_args)
 
